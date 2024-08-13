@@ -1,4 +1,4 @@
-```html
+html
 <!DOCTYPE html>
 <html>
 <head>
@@ -56,7 +56,7 @@
 
     // りんごを描画
     function drawApples() {
-      // りんごを一つずつ描画
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight); // キャンバスをクリア
       apples.forEach((apple) => {
         ctx.fillStyle = apple.color;
         ctx.beginPath();
@@ -67,57 +67,70 @@
 
     // りんごを消す
     function removeApples(indices) {
-      // 指定されたインデックスのりんごを消す
+      // インデックスを降順でソート
+      indices.sort((a, b) => b - a);
+
+      // りんごを消去
       indices.forEach((index) => {
         apples.splice(index, 1);
       });
+
+      // りんごを落下させる
+      for (let i = gridSize * gridSize - 1; i >= 0; i--) {
+        // 空いている場所
+        if (apples[i] === undefined) {
+          // 上のりんごを見つける
+          for (let j = i - gridSize; j >= 0; j -= gridSize) {
+            if (apples[j] !== undefined) {
+              apples[i] = apples[j];
+              apples[j] = undefined;
+              break;
+            }
+          }
+        }
+      }
     }
 
     // 同じ色のりんごを3つ以上揃える
     function checkMatch() {
-      // マスの数だけループ
+      let hasMatch = false;
       for (let i = 0; i < gridSize * gridSize; i++) {
-        // 同じ色のりんごを探す
         const matches = findMatches(i);
-        // 3つ以上揃っていたら消す
         if (matches.length >= 3) {
           removeApples(matches);
+          hasMatch = true;
         }
+      }
+
+      // もしりんごが一つも消えなければ、ゲーム終了
+      if (!hasMatch) {
+        // ゲーム終了処理を実装
+        alert("ゲーム終了！ 全部消してくれてありがとう！") 
+        clearInterval(gameLoopInterval); // ゲームループを停止
       }
     }
 
     // 同じ色のりんごを探す
     function findMatches(index) {
-      // 同じ色のりんごのインデックスを格納する配列
       let matches = [];
-      // 現在のりんごの色
       const currentColor = apples[index].color;
-      // 現在のりんごの座標
       const currentX = (index % gridSize) * appleSize;
       const currentY = Math.floor(index / gridSize) * appleSize;
       // 上方向に同じ色のりんごを探す
-      let upIndex = index - gridSize;
-      while (upIndex >= 0 && apples[upIndex] && apples[upIndex].color === currentColor) {
-        matches.push(upIndex);
-        upIndex -= gridSize;
+      for (let i = index - gridSize; i >= 0 && apples[i] && apples[i].color === currentColor; i -= gridSize) {
+        matches.push(i);
       }
       // 下方向に同じ色のりんごを探す
-      let downIndex = index + gridSize;
-      while (downIndex < gridSize * gridSize && apples[downIndex] && apples[downIndex].color === currentColor) {
-        matches.push(downIndex);
-        downIndex += gridSize;
+      for (let i = index + gridSize; i < gridSize * gridSize && apples[i] && apples[i].color === currentColor; i += gridSize) {
+        matches.push(i);
       }
       // 左方向に同じ色のりんごを探す
-      let leftIndex = index - 1;
-      while (leftIndex >= 0 && apples[leftIndex] && apples[leftIndex].color === currentColor && Math.floor(leftIndex / gridSize) === Math.floor(index / gridSize)) {
-        matches.push(leftIndex);
-        leftIndex--;
+      for (let i = index - 1; i >= 0 && apples[i] && apples[i].color === currentColor && Math.floor(i / gridSize) === Math.floor(index / gridSize); i--) {
+        matches.push(i);
       }
       // 右方向に同じ色のりんごを探す
-      let rightIndex = index + 1;
-      while (rightIndex < gridSize * gridSize && apples[rightIndex] && apples[rightIndex].color === currentColor && Math.floor(rightIndex / gridSize) === Math.floor(index / gridSize)) {
-        matches.push(rightIndex);
-        rightIndex++;
+      for (let i = index + 1; i < gridSize * gridSize && apples[i] && apples[i].color === currentColor && Math.floor(i / gridSize) === Math.floor(index / gridSize); i++) {
+        matches.push(i);
       }
       // 同じ色のりんごを全て格納する
       matches.push(index);
@@ -126,12 +139,9 @@
 
     // マウスイベント処理
     canvas.addEventListener("click", (event) => {
-      // クリックした位置の座標を取得
       const clickX = event.offsetX;
       const clickY = event.offsetY;
-      // クリックした位置のりんごのインデックスを取得
       const index = Math.floor(clickY / appleSize) * gridSize + Math.floor(clickX / appleSize);
-      // クリックしたりんごと同じ色のりんごを3つ以上揃える
       checkMatch();
     });
 
@@ -139,24 +149,7 @@
     initializeGame();
 
     // ゲームループ
-    function gameLoop() {
-      // キャンバスをクリア
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      // りんごを描画
-      drawApples();
-      // 同じ色のりんごを3つ以上揃えるチェック
-      checkMatch();
-      // ゲームループを継続
-      requestAnimationFrame(gameLoop);
-    }
-
-    // ゲームループを開始
-    gameLoop();
+    const gameLoopInterval = setInterval(drawApples, 100);
   </script>
 </body>
 </html>
-```
-
-
-    
-
